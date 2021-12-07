@@ -1,16 +1,10 @@
 from discord.ext import commands
-from threading import Thread
-from .manager import Manager
 
 client = commands.Bot(command_prefix='!server ')
 
 ops = ['zach#3244', 'gigawhattt#1102', 'rockncole#2771']
 
 class DiscordManager:
-
-    token: str
-    thread: Thread
-    manager: Manager
 
     def __init__(self, api_token, manager):
         self.token = api_token
@@ -72,10 +66,7 @@ class DiscordManager:
 
         @client.event
         async def on_message(message):
-            if client.user.id != message.author.id:
-                if 'foo' in message.content:
-                    await client.send_message(message.channel, 'bar')
-
+            # Do not remove this
             await client.process_commands(message)
         
         client.run(self.token)

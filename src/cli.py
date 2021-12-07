@@ -4,7 +4,7 @@ import atexit
 import click
 from .manager import MinecraftManager
 
-manager: MinecraftManager = None
+manager = None
 
 def close_process():
     if manager:

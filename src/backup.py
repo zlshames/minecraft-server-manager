@@ -10,14 +10,6 @@ from .manager import Manager
 
 class BackupManager:
 
-    server_path: str
-    backup_path: str
-    excluded_files: list[str]
-    excluded_file_types: list[str]
-    max_backups: int
-    manager: Manager
-    server_files: list[str]
-
     def __init__(self, server_path, backup_path, excluded_files=None, excluded_file_types=None,
                  max_backups=10, cwd=None, manager=None):
         self.server_path = server_path

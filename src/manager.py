@@ -4,7 +4,7 @@ import subprocess
 from datetime import datetime
 from threading import Timer
 import logging
-from logging import Logger, Manager, handlers
+from logging import handlers
 from pathlib import Path
 import sys
 import traceback
@@ -27,21 +27,6 @@ class MinecraftManager:
         'server_path', 'log_path', 'backup_dir', 'backup_frequency',
         'min_java_memory', 'max_java_memory'
     ]
-
-    server_path: str
-    log_path: str
-    backup_dir: str
-    exluded_files: list[str]
-    excluded_file_types: list[str]
-    backup_frequency: int
-    logger: Logger
-    process: subprocess.Popen
-    state: int
-    read_thread: Thread
-    listen_thread: Thread
-    backup_timer: Timer
-    current_dir: str
-
 
     def __init__(self, server_path, **kwargs):
         self.state = ManagerState.INACTIVE
@@ -305,6 +290,9 @@ class MinecraftManager:
             self.process.stdin.flush()
         except Exception as ex:
             self.log('Failed to execute server command! Error: {}'.format(str(ex)), level='error')
+
+    def send_server_message(self, message):
+        self.run_server_command('say {}'.format(message))
 
     def perform_backup(self, start_next_timer=True):
         self.log('Performing backup...')
