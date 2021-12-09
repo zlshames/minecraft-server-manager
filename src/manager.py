@@ -153,12 +153,7 @@ class MinecraftManager:
 
         self.log('Handling Command: "{}"'.format(command), level='debug')
         sani_cmd = command.lower().strip().replace('_', '-').replace(' ', '-')
-        if sani_cmd.lower() in ['stop', 'quit']:
-            self.run_server_command('stop')
-            self.process.wait()
-            self.state = ManagerState.INACTIVE
-            self.log('Stopped Minecraft Server...')
-        elif sani_cmd.lower() in ['start']:
+        if sani_cmd.lower() in ['start']:
             if self.process and self.state != ManagerState.INACTIVE:
                 self.log('Minecraft server is already running! Not starting it again...')
                 return
@@ -169,8 +164,6 @@ class MinecraftManager:
                 await self.command_handler('stop')
             self.start_server()
         elif sani_cmd.lower() in ['quit', 'exit']:
-            if self.process and self.state == ManagerState.RUNNING:
-                await self.command_handler('stop')
             self.log('Quiting Minecraft Manager...')
             await self.stop_server(quit=True)
         elif sani_cmd.lower() in ['backup', 'backup-now']:
@@ -224,11 +217,11 @@ class MinecraftManager:
 
             self.log('Minecraft server closed', level='debug')
 
-        await self.stop_server()
         if ret_code and ret_code != 130:  # 130 is SIGKILL/SIGTERM
             self.log('Subprocess error detected! Code: {}; Command: {}'.format(ret_code, self.get_run_command()))
 
         self.listen_thread = None
+        await self.stop_server()
 
     async def listen_for_stdin(self):
         self.log('Listening for input commands...', level='debug')
@@ -242,18 +235,12 @@ class MinecraftManager:
         self.log('Stopped listening for input commands', level='debug')
 
     async def stop_server(self, quit=False, exit_code=0):
-        self.state = ManagerState.QUITING if quit else ManagerState.STOPPING
+        if self.state in [ManagerState.STOPPING, ManagerState.QUITING]:
+            return
 
+        self.state = ManagerState.QUITING if quit else ManagerState.STOPPING
         if self.process and self.process.returncode is None:
             await self.command_handler("stop")
-        elif self.process:
-            try:
-                self.process.stdout.close()
-                self.process.stdin.close()
-                self.process.kill()
-                self.process.terminate()
-            except:
-                pass
 
         try:
             if self.listen_thread and self.listen_thread.is_alive:
@@ -263,11 +250,10 @@ class MinecraftManager:
 
         if quit:
             self.log('Quitting...')
-
             if self.discord:
                 await self.discord.stop()
 
-            sys.exit(exit_code)
+            os._exit(exit_code)
         else:
             self.state = ManagerState.INACTIVE
 

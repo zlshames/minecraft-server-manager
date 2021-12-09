@@ -6,7 +6,6 @@ from pathlib import Path
 from time import sleep
 from datetime import datetime
 from pathlib import Path
-from .manager import Manager
 
 class BackupManager:
 
