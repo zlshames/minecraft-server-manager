@@ -127,7 +127,7 @@ class MinecraftManager:
         self.listen_thread.start()
 
     def start_backup_timer(self, force=False):
-        if hasattr(self, 'backup_timer') and self.backup_timer and self.backup_timer.is_alive:
+        if hasattr(self, 'backup_timer') and self.backup_timer and self.backup_timer.is_alive():
             if not force:
                 self.log('Backup timer already in progress. Not creating a new one...')
                 return
@@ -163,12 +163,16 @@ class MinecraftManager:
             if self.process and self.state == ManagerState.RUNNING:
                 await self.command_handler('stop')
             self.start_server()
+        elif sani_cmd.lower() in ['stop']:
+            if self.process and self.state == ManagerState.RUNNING:
+                self.run_server_command('stop')
+            self.state == ManagerState.INACTIVE
         elif sani_cmd.lower() in ['quit', 'exit']:
             self.log('Quiting Minecraft Manager...')
             await self.stop_server(quit=True)
         elif sani_cmd.lower() in ['backup', 'backup-now']:
             self.stop_backup()
-            self.perform_backup(start_next_timer=False)
+            self.perform_backup(start_next_timer=True)
         elif sani_cmd.lower() in ['cancel-backup-timer', 'cancel-backup', 'cancel-backup-schedule']:
             self.stop_backup()
         elif sani_cmd.lower() in ['start-backup', 'start-backup-timer']:
@@ -177,9 +181,11 @@ class MinecraftManager:
             await self.perform_restore_last_snapshot()
         elif sani_cmd.lower() in ['help']:
             self.display_help()
-        else:
+        elif self.process and self.state == ManagerState.RUNNING:
             # If no cases match, forward it to the server
             self.run_server_command(command)
+        else:
+            self.log("Unable to handle command: {}! (State: {})".format(command, self.state))
 
     async def listen_for_stdout(self):
         if not self.process:
@@ -304,8 +310,12 @@ class MinecraftManager:
             self.run_server_command("save-on")
             self.run_server_command("say Backup Complete!")
 
+        # Clear the backup timer
+        self.backup_timer = None
+
         # Start the next backup timer
         if self.state != ManagerState.QUITING and start_next_timer:
+            self.log("Starting next backup timer...")
             self.start_backup_timer()
 
     async def perform_restore_last_snapshot(self):

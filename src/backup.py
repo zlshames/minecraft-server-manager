@@ -1,4 +1,3 @@
-from logging import root
 import os
 import shutil
 import tarfile
@@ -54,9 +53,6 @@ class BackupManager:
         # Cache the server file names
         self.cache_server_filenames()
 
-        # If we have maxed out our backups, delete some, starting from the oldest
-        self.delete_old_backups()
-
         # Copy JAR files to it
         self.server_files = self.get_server_files()
         for i in self.server_files:
@@ -78,6 +74,10 @@ class BackupManager:
         # If it's successful, get the file and log
         size = os.path.getsize(save_path)
         self.manager.log('Successfully took snapshot of the Minecraft Server: {} bytes'.format(size))
+
+        # If we have maxed out our backups, delete some, starting from the oldest
+        self.delete_old_backups()
+
         return save_path
 
     async def restore_last_snapshot(self, save_current=False):
@@ -156,7 +156,7 @@ class BackupManager:
         if old_backups == 0:
             return
 
-        self.manager.log('Deleting {} old backups...'.format(old_backups))
+        self.manager.log('Deleting {} old backup(s)...'.format(old_backups))
         for _ in range(old_backups):
             oldest = self.get_oldest_backup()
 
@@ -166,7 +166,7 @@ class BackupManager:
             except:
                 pass
 
-        self.manager.log('Successfully deleted {} old backups...'.format(success))
+        self.manager.log('Successfully deleted {} old backup(s)...'.format(success))
 
     def get_backup_count(self):
         count = 0
